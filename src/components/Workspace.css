@@ -1,0 +1,14 @@
+.workspace-container {
+  flex: 1;
+  position: relative;
+  background: #0e0e1a;
+  overflow: hidden;
+}
+
+.workspace-svg {
+  display: block;
+}
+
+.workspace-cards {
+  cursor: default;
+}

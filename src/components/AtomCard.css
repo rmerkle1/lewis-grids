@@ -1,0 +1,104 @@
+.atom-card {
+  position: absolute;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  box-sizing: border-box;
+  transition: box-shadow 0.15s ease, transform 0.08s ease;
+
+  /* Edge borders injected via CSS vars */
+  border-top: var(--border-top, 1.5px solid rgba(255,255,255,0.2));
+  border-right: var(--border-right, 1.5px solid rgba(255,255,255,0.2));
+  border-bottom: var(--border-bottom, 1.5px solid rgba(255,255,255,0.2));
+  border-left: var(--border-left, 1.5px solid rgba(255,255,255,0.2));
+}
+
+.atom-card:hover {
+  box-shadow: 0 0 0 2px rgba(100, 180, 255, 0.5), 0 4px 16px rgba(0,0,0,0.4);
+  z-index: 10;
+}
+
+.atom-card.dragging {
+  cursor: grabbing;
+  z-index: 100;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 2px rgba(100,180,255,0.7);
+  transition: box-shadow 0.1s ease;
+}
+
+.atom-card.snapped {
+  cursor: default;
+  box-shadow: 0 0 0 2px rgba(68, 255, 136, 0.6), 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.atom-label {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 20px;
+  font-weight: bold;
+  color: #111;
+  pointer-events: none;
+  z-index: 2;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.3);
+}
+
+/* Active edge highlight bars */
+.active-edge {
+  position: absolute;
+  background: rgba(68, 170, 255, 0.55);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.active-edge--top    { top: 0;    left: 8px; right: 8px; height: 4px; border-radius: 0 0 3px 3px; }
+.active-edge--bottom { bottom: 0; left: 8px; right: 8px; height: 4px; border-radius: 3px 3px 0 0; }
+.active-edge--left   { left: 0;   top: 8px; bottom: 8px; width: 4px; border-radius: 0 3px 3px 0; }
+.active-edge--right  { right: 0;  top: 8px; bottom: 8px; width: 4px; border-radius: 3px 0 0 3px; }
+
+/* Control buttons - appear on hover */
+.card-controls {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%) rotate(calc(-1 * var(--card-rotation, 0deg)));
+  display: none;
+  gap: 2px;
+  background: rgba(20, 20, 30, 0.92);
+  border-radius: 6px;
+  padding: 2px 4px;
+  white-space: nowrap;
+  z-index: 200;
+}
+
+.atom-card:hover .card-controls,
+.atom-card.dragging .card-controls {
+  display: flex;
+}
+
+.rotate-btn, .remove-btn {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #ddd;
+  font-size: 14px;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.1s;
+}
+
+.rotate-btn:hover {
+  background: rgba(100,180,255,0.3);
+  color: #fff;
+}
+
+.remove-btn:hover {
+  background: rgba(255,80,80,0.4);
+  color: #fff;
+}
