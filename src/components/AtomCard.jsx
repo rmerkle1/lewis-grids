@@ -1,11 +1,11 @@
-import { useRef } from 'react';
+import { getCardBondSquarePositions, BOND_SQUARE_SIZE, CARD_SIZE } from '../utils/geometry';
 import './AtomCard.css';
 
-// Edge indices: 0=top, 1=right, 2=bottom, 3=left
-const EDGE_NAMES = ['top', 'right', 'bottom', 'left'];
-
-export const CARD_SIZE = 80;
-
+/**
+ * Draggable outer-atom card.
+ * Has a single bonding edge (bottom at rotation=0) with bondOrder squares.
+ * Non-bond edges are passive; the top edge is a lone-pair drop zone.
+ */
 export default function AtomCard({
   card,
   isDragging,
@@ -15,19 +15,20 @@ export default function AtomCard({
   onRotateCCW,
   onRemove,
 }) {
-  const { position, rotation, type } = card;
-  const { label, color, activeEdges } = type;
+  const { position, rotation, element, label, color, bondOrder, lonePairs = [] } = card;
 
   const left = position.x - CARD_SIZE / 2;
-  const top = position.y - CARD_SIZE / 2;
+  const top  = position.y - CARD_SIZE / 2;
 
-  const borderStyles = {};
-  EDGE_NAMES.forEach((name, idx) => {
-    const isActive = activeEdges.includes(idx);
-    borderStyles[`--border-${name}`] = isActive
-      ? '3px solid #44aaff'
-      : '1.5px solid rgba(255,255,255,0.2)';
-  });
+  // Bond squares on the bottom edge (edge index 2)
+  const bondSquares = getCardBondSquarePositions(2, bondOrder);
+
+  // Lone-pair dots: rendered at top edge (edge 0), centered
+  const lonePairSlots = lonePairs.map((_, i) => ({
+    x: CARD_SIZE / 2 - 10 + (i % 3) * 0 - (Math.min(lonePairs.length, 3) - 1) * 6,
+    y: 4,
+    index: i,
+  }));
 
   return (
     <div
@@ -39,12 +40,35 @@ export default function AtomCard({
         height: CARD_SIZE,
         transform: `rotate(${rotation}deg)`,
         background: color || '#333',
-        ...borderStyles,
+        color: isLightColor(color) ? '#111' : '#fff',
       }}
       onPointerDown={onPointerDown}
     >
+      {/* Element label */}
       <span className="atom-label">{label}</span>
 
+      {/* Bond indicator squares on bottom edge */}
+      {bondSquares.map((pos, i) => (
+        <div
+          key={i}
+          className="bond-square"
+          style={{ left: pos.x, top: pos.y, width: BOND_SQUARE_SIZE, height: BOND_SQUARE_SIZE }}
+        />
+      ))}
+
+      {/* Lone pair circles on top edge */}
+      {lonePairs.length > 0 &&
+        lonePairs.map((_, i) => (
+          <div key={i} className="lone-pair-group" style={{ top: 3, left: CARD_SIZE / 2 - 10 + i * 0 }}>
+            <div className="lp-circle" />
+            <div className="lp-circle" />
+          </div>
+        ))}
+
+      {/* Lone-pair drop zone hint (top edge) — subtle */}
+      <div className="lp-drop-zone" />
+
+      {/* Controls (visible on hover) */}
       {!isSnapping && (
         <div className="card-controls">
           <button
@@ -67,13 +91,15 @@ export default function AtomCard({
           >×</button>
         </div>
       )}
-
-      {/* Active edge highlight overlays */}
-      {EDGE_NAMES.map((name, idx) =>
-        activeEdges.includes(idx) ? (
-          <div key={name} className={`active-edge active-edge--${name}`} />
-        ) : null
-      )}
     </div>
   );
+}
+
+function isLightColor(hex) {
+  if (!hex) return false;
+  const c = hex.replace('#', '');
+  const r = parseInt(c.slice(0, 2), 16);
+  const g = parseInt(c.slice(2, 4), 16);
+  const b = parseInt(c.slice(4, 6), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 128;
 }

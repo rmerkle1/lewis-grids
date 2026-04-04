@@ -1,133 +1,158 @@
 .palette {
-  width: 220px;
-  min-width: 220px;
-  background: #1a1a2e;
-  border-right: 1px solid rgba(255,255,255,0.08);
-  padding: 16px 12px;
+  width: 240px;
+  min-width: 240px;
+  background: #13132a;
+  border-right: 1px solid rgba(255,255,255,0.07);
+  padding: 14px 10px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 0;
 }
 
-.palette-section {
-  margin-bottom: 8px;
-}
+.palette-section { margin-bottom: 6px; }
 
 .palette-heading {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.4);
-  margin: 0 0 4px 0;
+  color: rgba(255,255,255,0.35);
+  margin: 0 0 3px 0;
 }
 
 .palette-hint {
-  font-size: 11px;
-  color: rgba(255,255,255,0.25);
-  margin: 0 0 10px 0;
+  font-size: 10px;
+  color: rgba(255,255,255,0.22);
+  margin: 0 0 8px 0;
 }
 
 .palette-divider {
   height: 1px;
-  background: rgba(255,255,255,0.08);
-  margin: 12px 0;
+  background: rgba(255,255,255,0.07);
+  margin: 10px 0;
 }
 
-/* Central atom selector */
-.central-atom-group {
-  margin-bottom: 4px;
-}
+/* ── Central atom groups ──────────────────────────────────── */
+.central-group { margin-bottom: 3px; }
 
-.central-atom-toggle {
+.central-toggle {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: rgba(255,255,255,0.05);
+  gap: 7px;
+  background: rgba(255,255,255,0.04);
   border: none;
-  border-radius: 6px;
-  padding: 7px 10px;
+  border-radius: 5px;
+  padding: 6px 8px;
   cursor: pointer;
-  transition: background 0.15s;
   text-align: left;
+  transition: background 0.12s;
 }
-
-.central-atom-toggle:hover {
-  background: rgba(255,255,255,0.1);
-}
+.central-toggle:hover { background: rgba(255,255,255,0.09); }
 
 .ca-symbol {
   font-family: 'Georgia', serif;
   font-weight: bold;
-  font-size: 17px;
-  min-width: 24px;
+  font-size: 16px;
+  min-width: 22px;
 }
+.ca-name { font-size: 11px; color: rgba(255,255,255,0.55); flex: 1; }
+.ca-chevron { font-size: 8px; color: rgba(255,255,255,0.25); }
 
-.ca-name {
-  font-size: 12px;
-  color: rgba(255,255,255,0.6);
-  flex: 1;
-}
-
-.ca-chevron {
-  font-size: 9px;
-  color: rgba(255,255,255,0.3);
-}
-
-.domain-options {
+/* Config list within an element */
+.config-list {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  padding: 4px 0 4px 12px;
+  padding: 3px 0 3px 10px;
 }
 
-.domain-btn {
-  background: rgba(100,180,255,0.1);
-  border: 1px solid rgba(100,180,255,0.25);
-  border-radius: 5px;
-  color: #aad4ff;
-  font-size: 12px;
-  padding: 5px 10px;
+.config-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  padding: 5px 7px;
   cursor: pointer;
   text-align: left;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.12s, border-color 0.12s;
+}
+.config-btn:hover {
+  background: rgba(100,180,255,0.1);
+  border-color: rgba(100,180,255,0.3);
 }
 
-.domain-btn:hover {
-  background: rgba(100,180,255,0.25);
-  border-color: rgba(100,180,255,0.5);
+.config-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
+.config-label { font-size: 12px; color: rgba(255,255,255,0.75); font-weight: 600; }
+.config-hint  { font-size: 10px; color: rgba(255,255,255,0.35); }
 
-/* Non-central atom cards grid */
-.atom-card-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+/* ── Outer atoms ──────────────────────────────────────────── */
+.outer-atom-list { display: flex; flex-direction: column; gap: 4px; }
+
+.outer-atom-row {
+  display: flex;
+  align-items: center;
   gap: 6px;
 }
 
-.palette-card {
-  aspect-ratio: 1;
-  border-radius: 6px;
-  border: 1.5px solid rgba(0,0,0,0.2);
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 15px;
+.outer-symbol {
+  font-family: 'Georgia', serif;
   font-weight: bold;
-  color: #111;
+  font-size: 14px;
+  min-width: 26px;
+  text-align: center;
+  border-radius: 4px;
+  padding: 2px 4px;
+  flex-shrink: 0;
+}
+
+.bond-order-btns { display: flex; gap: 3px; }
+
+.bond-order-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  color: rgba(255,255,255,0.7);
+  font-size: 11px;
+  padding: 3px 6px;
   cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.1s;
+  transition: background 0.1s;
+}
+.bond-order-btn:hover {
+  background: rgba(100,180,255,0.2);
+  border-color: rgba(100,180,255,0.4);
+  color: #fff;
+}
+
+/* ── Lone pairs ───────────────────────────────────────────── */
+.lone-pair-spawn-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0;
+  gap: 6px;
+  background: rgba(150,80,255,0.1);
+  border: 1.5px dashed rgba(180,120,255,0.4);
+  border-radius: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.12s;
+}
+.lone-pair-spawn-btn:hover { background: rgba(150,80,255,0.2); }
+
+.lp-dot-preview {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(200,140,255,0.85);
+  border: 1.5px solid rgba(255,255,255,0.4);
+  flex-shrink: 0;
 }
 
-.palette-card:hover {
-  transform: scale(1.08);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-}
-
-.palette-card:active {
-  transform: scale(0.96);
-}
+.lp-spawn-label { font-size: 12px; color: rgba(200,150,255,0.85); }

@@ -5,24 +5,41 @@ import './App.css';
 
 export default function App() {
   const [centralAtom, setCentralAtom] = useState(null);
-  const [cards, setCards] = useState([]);
+  const [cards, setCards]             = useState([]);
+  const [lonePairs, setLonePairs]     = useState([]);
   const nextId = useRef(1);
 
   const handleSelectCentral = useCallback((atom) => {
     setCentralAtom(atom);
     setCards([]);
+    setLonePairs([]);
   }, []);
 
+  // Add outer-atom card near workspace center with jitter
   const handleAddCard = useCallback((cardType) => {
-    const jitter = () => (Math.random() - 0.5) * 80;
+    const jitter = () => (Math.random() - 0.5) * 100;
     setCards((prev) => [
       ...prev,
       {
         id: `card-${nextId.current++}`,
-        type: cardType,
+        ...cardType,
         position: { x: 400 + jitter(), y: 300 + jitter() },
         rotation: 0,
         snappedEdge: null,
+        lonePairs: [],
+      },
+    ]);
+  }, []);
+
+  // Add a free-floating lone pair
+  const handleAddLonePair = useCallback(() => {
+    const jitter = () => (Math.random() - 0.5) * 80;
+    setLonePairs((prev) => [
+      ...prev,
+      {
+        id: `lp-${nextId.current++}`,
+        position: { x: 400 + jitter(), y: 300 + jitter() },
+        snappedTo: null,
       },
     ]);
   }, []);
@@ -35,6 +52,17 @@ export default function App() {
     setCards((prev) => prev.filter((c) => c.id !== id));
   }, []);
 
+  const handleUpdateLonePair = useCallback((id, updates) => {
+    setLonePairs((prev) => prev.map((lp) => (lp.id === id ? { ...lp, ...updates } : lp)));
+  }, []);
+
+  const handleRemoveLonePair = useCallback((id) => {
+    setLonePairs((prev) => prev.filter((lp) => lp.id !== id));
+  }, []);
+
+  const shapeLabel = (n) =>
+    ({ 2: 'Linear', 3: 'Triangle', 4: 'Square', 5: 'Pentagon', 6: 'Hexagon' }[n] || `${n}-gon`);
+
   return (
     <div className="app">
       <header className="app-header">
@@ -46,7 +74,7 @@ export default function App() {
               {centralAtom.element}
             </span>
             <span className="status-shape">
-              {domainShapeName(centralAtom.domains)} · {centralAtom.domains} domains
+              {shapeLabel(centralAtom.domains)} · {centralAtom.label}
             </span>
             <button className="btn-clear" onClick={() => handleSelectCentral(null)}>
               Clear
@@ -56,19 +84,21 @@ export default function App() {
       </header>
 
       <div className="app-body">
-        <Palette onSelectCentral={handleSelectCentral} onAddCard={handleAddCard} />
+        <Palette
+          onSelectCentral={handleSelectCentral}
+          onAddCard={handleAddCard}
+          onAddLonePair={handleAddLonePair}
+        />
         <Workspace
           centralAtom={centralAtom}
           cards={cards}
+          lonePairs={lonePairs}
           onUpdateCard={handleUpdateCard}
           onRemoveCard={handleRemoveCard}
+          onUpdateLonePair={handleUpdateLonePair}
+          onRemoveLonePair={handleRemoveLonePair}
         />
       </div>
     </div>
   );
-}
-
-function domainShapeName(n) {
-  const names = { 2: 'Linear', 3: 'Triangle', 4: 'Square', 5: 'Pentagon', 6: 'Hexagon' };
-  return names[n] || `${n}-gon`;
 }
