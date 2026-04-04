@@ -8,9 +8,9 @@
   user-select: none;
   touch-action: none;
   box-sizing: border-box;
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  /* No overflow: visible — squares are inside now */
   transition: box-shadow 0.12s ease;
-  overflow: visible; /* bond squares can poke outside */
 }
 
 .atom-card:hover {
@@ -26,10 +26,9 @@
 
 .atom-card.snapped {
   cursor: default;
-  box-shadow: 0 0 0 2px rgba(68, 255, 136, 0.5), 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 0 0 2px rgba(68, 255, 136, 0.45), 0 2px 8px rgba(0,0,0,0.3);
 }
 
-/* ── Element label ──────────────────────────────────────────── */
 .atom-label {
   font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 20px;
@@ -39,46 +38,17 @@
   position: relative;
 }
 
-/* ── Bond indicator squares ─────────────────────────────────── */
+/* Bond squares — inside the card, against the active edge */
 .bond-square {
   position: absolute;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(0, 0, 0, 0.35);
-  border-radius: 1.5px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  border-radius: 2px;
   z-index: 5;
   pointer-events: none;
 }
 
-/* ── Lone pair drop zone hint (top edge) ────────────────────── */
-.lp-drop-zone {
-  position: absolute;
-  top: 0;
-  left: 20%;
-  width: 60%;
-  height: 3px;
-  background: rgba(180, 120, 255, 0.25);
-  border-radius: 0 0 2px 2px;
-  pointer-events: none;
-}
-
-/* ── Lone pair circles ──────────────────────────────────────── */
-.lone-pair-group {
-  position: absolute;
-  display: flex;
-  gap: 3px;
-  pointer-events: none;
-  z-index: 5;
-}
-
-.lp-circle {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: rgba(180, 120, 255, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-}
-
-/* ── Controls ───────────────────────────────────────────────── */
+/* Controls */
 .card-controls {
   position: absolute;
   top: -30px;
@@ -86,7 +56,7 @@
   transform: translateX(-50%);
   display: none;
   gap: 2px;
-  background: rgba(15, 15, 30, 0.94);
+  background: rgba(12, 12, 26, 0.94);
   border-radius: 6px;
   padding: 3px 5px;
   white-space: nowrap;
@@ -99,8 +69,8 @@
 }
 
 .rotate-btn, .remove-btn {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
   color: #ccc;
   font-size: 14px;
   width: 22px;

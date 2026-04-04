@@ -5,15 +5,33 @@ import './Palette.css';
 
 const BOND_LABEL = { 1: '×1', 2: '×2', 3: '×3' };
 
-export default function Palette({ onSelectCentral, onAddCard, onAddLonePair }) {
+export default function Palette({ mode, onModeChange, onSelectCentral, onAddCard, onAddLonePair }) {
   const [expandedElement, setExpandedElement] = useState(null);
 
   return (
     <aside className="palette">
-      {/* ── Central atoms ──────────────────────────────────────── */}
+      {/* ── Central atoms ──────────────────────────────────── */}
       <section className="palette-section">
-        <h3 className="palette-heading">Central Atom</h3>
-        <p className="palette-hint">Choose element then configuration</p>
+        <div className="central-header">
+          <h3 className="palette-heading">Central Atom</h3>
+          <div className="mode-toggle" role="group" aria-label="Atom mode">
+            <button
+              className={`mode-btn ${mode === 'single' ? 'active' : ''}`}
+              onClick={() => onModeChange('single')}
+              title="Only one central atom at a time"
+            >Single</button>
+            <button
+              className={`mode-btn ${mode === 'multiple' ? 'active' : ''}`}
+              onClick={() => onModeChange('multiple')}
+              title="Multiple central atoms"
+            >Multiple</button>
+          </div>
+        </div>
+        <p className="palette-hint">
+          {mode === 'single'
+            ? 'Selecting a new atom replaces the current one'
+            : 'Each selection adds another central atom'}
+        </p>
 
         {CENTRAL_ATOM_GROUPS.map((group) => (
           <div key={group.element} className="central-group">
@@ -64,11 +82,10 @@ export default function Palette({ onSelectCentral, onAddCard, onAddLonePair }) {
 
       <div className="palette-divider" />
 
-      {/* ── Outer atoms ────────────────────────────────────────── */}
+      {/* ── Outer atoms ────────────────────────────────────── */}
       <section className="palette-section">
         <h3 className="palette-heading">Outer Atoms</h3>
         <p className="palette-hint">Click bond-order to add</p>
-
         <div className="outer-atom-list">
           {OUTER_ATOM_GROUPS.map((grp) => (
             <div key={grp.element} className="outer-atom-row">
@@ -107,10 +124,10 @@ export default function Palette({ onSelectCentral, onAddCard, onAddLonePair }) {
 
       <div className="palette-divider" />
 
-      {/* ── Lone pairs ─────────────────────────────────────────── */}
+      {/* ── Lone pairs ─────────────────────────────────────── */}
       <section className="palette-section">
         <h3 className="palette-heading">Lone Pairs</h3>
-        <p className="palette-hint">Drag onto atom top edge</p>
+        <p className="palette-hint">Drag onto any non-bond edge</p>
         <button className="lone-pair-spawn-btn" onClick={onAddLonePair}>
           <span className="lp-dot-preview" />
           <span className="lp-dot-preview" />

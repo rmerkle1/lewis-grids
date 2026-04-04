@@ -4,18 +4,97 @@ import Palette from './components/Palette';
 import './App.css';
 
 export default function App() {
-  const [centralAtom, setCentralAtom] = useState(null);
-  const [cards, setCards]             = useState([]);
-  const [lonePairs, setLonePairs]     = useState([]);
+  const [mode, setMode]           = useState('single');
+  const [centralAtoms, setCentralAtoms] = useState([]);
+  const [cards, setCards]         = useState([]);
+  const [lonePairs, setLonePairs] = useState([]);
   const nextId = useRef(1);
 
-  const handleSelectCentral = useCallback((atom) => {
-    setCentralAtom(atom);
-    setCards([]);
-    setLonePairs([]);
+  // ── Mode change ──────────────────────────────────────────────────────────
+
+  const handleModeChange = useCallback((newMode) => {
+    setMode(newMode);
+    // Switching to single: keep only the first central atom (if any)
+    if (newMode === 'single') {
+      setCentralAtoms((prev) => prev.slice(0, 1));
+      // Unsnap cards that were snapped to removed central atoms
+      setCards((prev) =>
+        prev.map((c) => {
+          if (!c.snappedEdge) return c;
+          // We don't know remaining centralAtom IDs here yet, so just clear all snaps
+          // (acceptable: user can re-snap)
+          return { ...c, snappedEdge: null };
+        })
+      );
+    }
   }, []);
 
-  // Add outer-atom card near workspace center with jitter
+  // ── Central atom management ──────────────────────────────────────────────
+
+  const handleSelectCentral = useCallback((config) => {
+    const newAtom = {
+      id: `ca-${nextId.current++}`,
+      ...config,
+      position: getSpawnPosition(centralAtoms.length),
+    };
+
+    if (mode === 'single') {
+      setCentralAtoms([newAtom]);
+      // Clear all cards and lone pairs on new central atom selection in single mode
+      setCards([]);
+      setLonePairs([]);
+    } else {
+      setCentralAtoms((prev) => [...prev, newAtom]);
+    }
+  }, [mode, centralAtoms.length]);
+
+  // Called by Workspace on drag — updates position and cascades to snapped objects
+  const handleUpdateCentralAtom = useCallback((id, newPosition) => {
+    let driftX = 0, driftY = 0;
+
+    setCentralAtoms((prev) => {
+      const old = prev.find((ca) => ca.id === id);
+      if (old) {
+        driftX = newPosition.x - old.position.x;
+        driftY = newPosition.y - old.position.y;
+      }
+      return prev.map((ca) => (ca.id === id ? { ...ca, position: newPosition } : ca));
+    });
+
+    // Move all snapped outer atom cards by the same delta
+    if (driftX !== 0 || driftY !== 0) {
+      setCards((prev) =>
+        prev.map((c) =>
+          c.snappedEdge?.centralId === id
+            ? { ...c, position: { x: c.position.x + driftX, y: c.position.y + driftY } }
+            : c
+        )
+      );
+      // Move lone pairs snapped to those cards
+      setLonePairs((prev) =>
+        prev.map((lp) => {
+          if (!lp.snappedTo) return lp;
+          // Check if the card this LP is on belongs to the moved central atom
+          const parentCard = cards.find(
+            (c) => c.id === lp.snappedTo.cardId && c.snappedEdge?.centralId === id
+          );
+          if (!parentCard) return lp;
+          return { ...lp, position: { x: lp.position.x + driftX, y: lp.position.y + driftY } };
+        })
+      );
+    }
+  }, [cards]);
+
+  const handleRemoveCentralAtom = useCallback((id) => {
+    setCentralAtoms((prev) => prev.filter((ca) => ca.id !== id));
+    // Unsnap cards that were attached to it
+    setCards((prev) =>
+      prev.map((c) => (c.snappedEdge?.centralId === id ? { ...c, snappedEdge: null } : c))
+    );
+  }, []);
+
+  // ── Card management ──────────────────────────────────────────────────────
+
   const handleAddCard = useCallback((cardType) => {
     const jitter = () => (Math.random() - 0.5) * 100;
     setCards((prev) => [
@@ -26,20 +105,6 @@ export default function App() {
         position: { x: 400 + jitter(), y: 300 + jitter() },
         rotation: 0,
         snappedEdge: null,
-        lonePairs: [],
-      },
-    ]);
-  }, []);
-
-  // Add a free-floating lone pair
-  const handleAddLonePair = useCallback(() => {
-    const jitter = () => (Math.random() - 0.5) * 80;
-    setLonePairs((prev) => [
-      ...prev,
-      {
-        id: `lp-${nextId.current++}`,
-        position: { x: 400 + jitter(), y: 300 + jitter() },
-        snappedTo: null,
       },
     ]);
   }, []);
@@ -50,6 +115,23 @@ export default function App() {
 
   const handleRemoveCard = useCallback((id) => {
     setCards((prev) => prev.filter((c) => c.id !== id));
+    // Remove lone pairs snapped to this card
+    setLonePairs((prev) => prev.filter((lp) => lp.snappedTo?.cardId !== id));
+  }, []);
+
+  // ── Lone pair management ─────────────────────────────────────────────────
+
+  const handleAddLonePair = useCallback(() => {
+    const jitter = () => (Math.random() - 0.5) * 80;
+    setLonePairs((prev) => [
+      ...prev,
+      {
+        id: `lp-${nextId.current++}`,
+        position: { x: 400 + jitter(), y: 300 + jitter() },
+        rotation: 0,
+        snappedTo: null,
+      },
+    ]);
   }, []);
 
   const handleUpdateLonePair = useCallback((id, updates) => {
@@ -60,39 +142,48 @@ export default function App() {
     setLonePairs((prev) => prev.filter((lp) => lp.id !== id));
   }, []);
 
-  const shapeLabel = (n) =>
-    ({ 2: 'Linear', 3: 'Triangle', 4: 'Square', 5: 'Pentagon', 6: 'Hexagon' }[n] || `${n}-gon`);
+  // ── Render ───────────────────────────────────────────────────────────────
 
   return (
     <div className="app">
       <header className="app-header">
         <span className="app-logo">⬡</span>
         <h1 className="app-title">Lewis Grids</h1>
-        {centralAtom && (
+        {centralAtoms.length > 0 && (
           <div className="app-status">
-            <span className="status-atom" style={{ color: centralAtom.color }}>
-              {centralAtom.element}
-            </span>
-            <span className="status-shape">
-              {shapeLabel(centralAtom.domains)} · {centralAtom.label}
-            </span>
-            <button className="btn-clear" onClick={() => handleSelectCentral(null)}>
-              Clear
-            </button>
+            {centralAtoms.map((ca) => (
+              <span key={ca.id} className="status-chip">
+                <span className="status-atom" style={{ color: ca.color }}>{ca.element}</span>
+                <span className="status-shape">{shapeLabel(ca.domains)}</span>
+                <button
+                  className="btn-remove-ca"
+                  onClick={() => handleRemoveCentralAtom(ca.id)}
+                  title="Remove this central atom"
+                >×</button>
+              </span>
+            ))}
+            {mode === 'single' && (
+              <button className="btn-clear" onClick={() => {
+                setCentralAtoms([]); setCards([]); setLonePairs([]);
+              }}>Clear</button>
+            )}
           </div>
         )}
       </header>
 
       <div className="app-body">
         <Palette
+          mode={mode}
+          onModeChange={handleModeChange}
           onSelectCentral={handleSelectCentral}
           onAddCard={handleAddCard}
           onAddLonePair={handleAddLonePair}
         />
         <Workspace
-          centralAtom={centralAtom}
+          centralAtoms={centralAtoms}
           cards={cards}
           lonePairs={lonePairs}
+          onUpdateCentralAtom={handleUpdateCentralAtom}
           onUpdateCard={handleUpdateCard}
           onRemoveCard={handleRemoveCard}
           onUpdateLonePair={handleUpdateLonePair}
@@ -101,4 +192,21 @@ export default function App() {
       </div>
     </div>
   );
+}
+
+function shapeLabel(n) {
+  return { 2: 'Linear', 3: 'Triangle', 4: 'Square', 5: 'Pentagon', 6: 'Hexagon' }[n] || `${n}-gon`;
+}
+
+function getSpawnPosition(existingCount) {
+  // Spread central atoms across the canvas
+  const positions = [
+    { x: 420, y: 310 },
+    { x: 660, y: 310 },
+    { x: 180, y: 310 },
+    { x: 420, y: 510 },
+    { x: 660, y: 510 },
+    { x: 180, y: 510 },
+  ];
+  return positions[existingCount % positions.length];
 }
