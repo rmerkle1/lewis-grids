@@ -1,0 +1,248 @@
+/* ── Highlight ring — outline only, no position change ────────────────────── */
+
+.tutorial-highlight {
+  outline: 2px solid rgba(58, 122, 255, 0.85);
+  outline-offset: 3px;
+  border-radius: 6px;
+  animation: tg-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tg-pulse {
+  0%, 100% { outline-color: rgba(58, 122, 255, 0.75); }
+  50%       { outline-color: rgba(100, 165, 255, 1); }
+}
+
+/* ── Welcome overlay ──────────────────────────────────────────────────────── */
+
+.tg-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 6, 18, 0.8);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.tg-welcome {
+  background: #13132a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(100, 160, 255, 0.06);
+  padding: 44px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  gap: 16px;
+}
+
+.tg-welcome-icon {
+  font-size: 48px;
+  color: #66aaff;
+  line-height: 1;
+}
+
+.tg-welcome-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #e4e4f8;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+.tg-welcome-sub {
+  font-size: 14px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.48);
+  margin: 0;
+  max-width: 310px;
+}
+
+/* ── Floating step guide panel ────────────────────────────────────────────── */
+
+.tg-panel {
+  /* position, top, left set via inline style per-step */
+  width: 288px;
+  background: #13132a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(100, 160, 255, 0.05);
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: top 0.22s ease, left 0.22s ease, right 0.22s ease, bottom 0.22s ease;
+}
+
+/* ── Head: progress bar + step counter + close ───────────────────────────── */
+
+.tg-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.tg-progress-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.tg-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3a7aff, #8844ee);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.tg-counter {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.28);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tg-x {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 1px 3px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.tg-x:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ── Body: step title + description ──────────────────────────────────────── */
+
+.tg-body {
+  padding: 13px 16px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.tg-step-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #d8d8f0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tg-icon {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.tg-desc {
+  font-size: 13px;
+  line-height: 1.62;
+  color: rgba(255, 255, 255, 0.56);
+  margin: 0;
+}
+
+/* ── Footer: action button or waiting label ──────────────────────────────── */
+
+.tg-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 7px 14px 13px;
+  min-height: 40px;
+}
+
+.tg-auto {
+  font-size: 11px;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+
+.tg-btn {
+  background: linear-gradient(135deg, #3a7aff, #7a44ee);
+  border: none;
+  border-radius: 7px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 20px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: opacity 0.15s, transform 0.1s;
+  box-shadow: 0 3px 12px rgba(60, 100, 255, 0.38);
+}
+
+.tg-btn:hover  { opacity: 0.88; transform: translateY(-1px); }
+.tg-btn:active { transform: translateY(0); opacity: 1; }
+
+.tg-btn--lg {
+  font-size: 15px;
+  padding: 12px 34px;
+}
+
+.tg-link {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  margin-top: -2px;
+  transition: color 0.15s;
+}
+
+.tg-link:hover { color: rgba(255, 255, 255, 0.6); }
+
+/* ── Completion toast ─────────────────────────────────────────────────────── */
+
+.tg-done {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  background: #13132a;
+  border: 1px solid rgba(76, 222, 138, 0.3);
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(76, 222, 138, 0.08);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  animation: tg-fade-in 0.25s ease;
+}
+
+@keyframes tg-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.tg-done-check {
+  color: #4cde8a;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.tg-done-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.62);
+  flex: 1;
+}

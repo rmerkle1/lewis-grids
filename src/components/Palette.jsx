@@ -1,15 +1,9 @@
-import { useState } from 'react';
-import { CENTRAL_ATOM_GROUPS, OUTER_ATOM_GROUPS } from '../data/atoms';
-import ConfigPreview from './ConfigPreview';
+import { CENTRAL_ATOM_CATEGORIES, OUTER_ATOM_GROUPS } from '../data/atoms';
 import './Palette.css';
 
-const BOND_LABEL = { 1: '×1', 2: '×2', 3: '×3' };
-
-export default function Palette({ mode, onModeChange, onSelectCentral, onAddCard, onAddLonePair }) {
-  const [expandedElement, setExpandedElement] = useState(null);
-
+export default function Palette({ mode, onModeChange, onSelectCentral, onAddCard }) {
   return (
-    <aside className="palette">
+    <aside className="palette" onClick={(e) => e.stopPropagation()}>
       {/* ── Central atoms ──────────────────────────────────── */}
       <section className="palette-section">
         <div className="central-header">
@@ -27,93 +21,24 @@ export default function Palette({ mode, onModeChange, onSelectCentral, onAddCard
             >Multiple</button>
           </div>
         </div>
-        <p className="palette-hint">
-          {mode === 'single'
-            ? 'Selecting a new atom replaces the current one'
-            : 'Each selection adds another central atom'}
-        </p>
+        <p className="palette-hint">Click to add · drag slider to adjust shape</p>
 
-        {CENTRAL_ATOM_GROUPS.map((group) => (
-          <div key={group.element} className="central-group">
-            <button
-              className="central-toggle"
-              style={{ borderLeft: `4px solid ${group.color}` }}
-              onClick={() =>
-                setExpandedElement((p) => (p === group.element ? null : group.element))
-              }
-            >
-              <span className="ca-symbol" style={{ color: group.color }}>{group.element}</span>
-              <span className="ca-name">{group.description}</span>
-              <span className="ca-chevron">{expandedElement === group.element ? '▲' : '▼'}</span>
-            </button>
-
-            {expandedElement === group.element && (
-              <div className="config-list">
-                {group.configurations.map((cfg) => (
+        <div className="central-atom-grid">
+          {CENTRAL_ATOM_CATEGORIES.map((cat) => (
+            <div key={cat.label} className="ca-category">
+              <div className="ca-size-label">{cat.label}</div>
+              <div className="ca-category-atoms">
+                {cat.atoms.map((group) => (
                   <button
-                    key={cfg.id}
-                    className="config-btn"
-                    onClick={() =>
-                      onSelectCentral({
-                        element: group.element,
-                        color: group.color,
-                        domains: cfg.domains,
-                        bondPattern: cfg.bondPattern,
-                        label: cfg.label,
-                      })
-                    }
+                    key={group.element}
+                    className="central-atom-btn"
+                    title={group.description}
+                    onClick={() => onSelectCentral(group)}
+                    style={{ '--ca-color': group.color, gridColumn: group.col }}
                   >
-                    <ConfigPreview
-                      domains={cfg.domains}
-                      bondPattern={cfg.bondPattern}
-                      color={group.color}
-                    />
-                    <div className="config-text">
-                      <span className="config-label">{cfg.label}</span>
-                      <span className="config-hint">{cfg.hint}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </section>
-
-      <div className="palette-divider" />
-
-      {/* ── Outer atoms ────────────────────────────────────── */}
-      <section className="palette-section">
-        <h3 className="palette-heading">Outer Atoms</h3>
-        <p className="palette-hint">Click bond-order to add</p>
-        <div className="outer-atom-list">
-          {OUTER_ATOM_GROUPS.map((grp) => (
-            <div key={grp.element} className="outer-atom-row">
-              <span
-                className="outer-symbol"
-                style={{
-                  color: isLightColor(grp.color) ? '#111' : grp.color,
-                  background: isLightColor(grp.color) ? grp.color : 'transparent',
-                }}
-              >
-                {grp.label}
-              </span>
-              <div className="bond-order-btns">
-                {grp.bondOrders.map((order) => (
-                  <button
-                    key={order}
-                    className="bond-order-btn"
-                    title={`${grp.description} – ${orderName(order)} bond`}
-                    onClick={() =>
-                      onAddCard({
-                        element: grp.element,
-                        label: grp.label,
-                        color: grp.color,
-                        bondOrder: order,
-                      })
-                    }
-                  >
-                    {BOND_LABEL[order]}
+                    <span className="ca-btn-symbol" style={{ color: group.color }}>
+                      {group.element}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -124,30 +49,38 @@ export default function Palette({ mode, onModeChange, onSelectCentral, onAddCard
 
       <div className="palette-divider" />
 
-      {/* ── Lone pairs ─────────────────────────────────────── */}
+      {/* ── Outer atoms ────────────────────────────────────── */}
       <section className="palette-section">
-        <h3 className="palette-heading">Lone Pairs</h3>
-        <p className="palette-hint">Drag onto any non-bond edge</p>
-        <button className="lone-pair-spawn-btn" onClick={onAddLonePair}>
-          <span className="lp-dot-preview" />
-          <span className="lp-dot-preview" />
-          <span className="lp-spawn-label">Add lone pair</span>
-        </button>
+        <h3 className="palette-heading">Outer Atoms</h3>
+        <p className="palette-hint">Click to add · use ⇄ on card to shuffle</p>
+        <div className="outer-atom-grid">
+          {OUTER_ATOM_GROUPS.map((grp) => (
+            <button
+              key={grp.element}
+              className="outer-atom-btn"
+              title={grp.description}
+              onClick={() =>
+                onAddCard({
+                  element:      grp.element,
+                  label:        grp.label,
+                  color:        grp.color,
+                  baseValence:  grp.baseValence,
+                  electrons:    [...grp.arrangements[0].electrons],
+                  arrangements: grp.arrangements,
+                })
+              }
+              style={{
+                color:       grp.color,
+                borderColor: grp.color + '55',
+                gridColumn:  grp.col,
+                gridRow:     grp.row,
+              }}
+            >
+              {grp.label}
+            </button>
+          ))}
+        </div>
       </section>
     </aside>
   );
-}
-
-function orderName(n) {
-  return ['', 'single', 'double', 'triple'][n] || `${n}×`;
-}
-
-function isLightColor(hex) {
-  if (!hex || hex === 'transparent') return false;
-  const c = hex.replace('#', '');
-  if (c.length < 6) return false;
-  const r = parseInt(c.slice(0, 2), 16);
-  const g = parseInt(c.slice(2, 4), 16);
-  const b = parseInt(c.slice(4, 6), 16);
-  return (r * 299 + g * 587 + b * 114) / 1000 > 145;
 }

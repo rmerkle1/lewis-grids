@@ -12,3 +12,45 @@
 .workspace-cards {
   cursor: default;
 }
+
+/* Central atom DOM overlay controls */
+.ca-overlay {
+  position: absolute;
+  pointer-events: none;
+}
+
+.ca-controls {
+  position: absolute;
+  display: none;
+  gap: 2px;
+  background: rgba(12, 12, 26, 0.94);
+  border-radius: 6px;
+  padding: 3px 5px;
+  white-space: nowrap;
+  z-index: 200;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.ca-overlay:hover .ca-controls {
+  display: flex;
+}
+
+.ca-rotate-btn, .ca-remove-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: #ccc;
+  font-size: 14px;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.1s;
+}
+
+.ca-rotate-btn:hover { background: rgba(100,180,255,0.3); color: #fff; }
+.ca-remove-btn:hover  { background: rgba(255,80,80,0.4);  color: #fff; }

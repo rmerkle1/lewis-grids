@@ -1,6 +1,6 @@
 // ── Polygon geometry ─────────────────────────────────────────────────────────
 
-export const EDGE_LENGTH = 80; // All polygon edges are this length (matches card size)
+export const EDGE_LENGTH = 100; // All polygon edges are this length (matches card size)
 
 export function getPolygonRadius(n) {
   if (n <= 2) return EDGE_LENGTH / 2;
@@ -15,8 +15,8 @@ export function getStartAngle(n) {
   }
 }
 
-export function getPolygonVertices(cx, cy, R, n) {
-  const startAngle = getStartAngle(n);
+export function getPolygonVertices(cx, cy, R, n, rotationOffset = 0) {
+  const startAngle = getStartAngle(n) + rotationOffset;
   return Array.from({ length: n }, (_, i) => {
     const angle = ((startAngle + i * (360 / n)) * Math.PI) / 180;
     return { x: cx + R * Math.cos(angle), y: cy + R * Math.sin(angle) };
@@ -40,7 +40,7 @@ export function polygonPointsStr(vertices) {
 
 // ── Card geometry ─────────────────────────────────────────────────────────────
 
-export const CARD_SIZE = 80;
+export const CARD_SIZE = 100;
 
 /**
  * CSS rotation is clockwise in screen space. For a card center at (cx, cy)
@@ -109,11 +109,44 @@ export function dist(x1, y1, x2, y2) {
   return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 }
 
+// ── Card electron squares (per-edge) ─────────────────────────────────────────
+
+/**
+ * Positions for electron squares on a given card edge (local card coords).
+ * Returns array of {x, y} top-left corners for each electron square.
+ * count: 0=empty, 1=single electron, 2=lone pair, 3=triple-bond contribution
+ *
+ * Edge 2 (bond edge) uses BOND_SQUARE_SIZE and BOND_GAP so squares align
+ * exactly with the central atom's polygon bond squares when snapped.
+ */
+export function getEdgeElectronPositions(edgeIndex, count) {
+  if (count === 0) return [];
+  const E   = BOND_SQUARE_SIZE;                     // 14 — same as polygon squares
+  const G   = edgeIndex === 2 ? BOND_GAP : 4;       // bond edge matches polygon gap
+  const S   = CARD_SIZE;                             // 80
+  const INS = edgeIndex === 2 ? 0 : 2;              // bond edge flush for alignment
+
+  const totalLen = count * E + (count - 1) * G;
+  const mid = (S - totalLen) / 2;
+
+  switch (edgeIndex) {
+    case 0: // top
+      return Array.from({ length: count }, (_, i) => ({ x: mid + i * (E + G), y: INS }));
+    case 2: // bottom (bond edge)
+      return Array.from({ length: count }, (_, i) => ({ x: mid + i * (E + G), y: S - E }));
+    case 1: // right
+      return Array.from({ length: count }, (_, i) => ({ x: S - INS - E, y: mid + i * (E + G) }));
+    case 3: // left
+      return Array.from({ length: count }, (_, i) => ({ x: INS, y: mid + i * (E + G) }));
+    default: return [];
+  }
+}
+
 // ── Bond indicator squares ────────────────────────────────────────────────────
 
 export const BOND_SQUARE_SIZE = 14;
-export const LONE_PAIR_H = 24; // imported here to avoid circular dep
-const BOND_GAP = 10;
+export const LONE_PAIR_H = 24; // kept for compatibility
+export const BOND_GAP = 10;
 
 /**
  * Bond squares for polygon edges — positioned INSIDE the polygon, touching the

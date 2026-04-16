@@ -1,42 +1,46 @@
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import PolygonAtom from './PolygonAtom';
 import AtomCard from './AtomCard';
-import LonePair, { LONE_PAIR_W, LONE_PAIR_H } from './LonePair';
 import {
   getPolygonRadius,
   getPolygonVertices,
   getEdgeMidpoints,
   getCardActiveEdgeMidpoint,
-  getCardEdgeWorld,
-  getLonePairSnapInfo,
   dist,
   CARD_SIZE,
   BOND_SQUARE_SIZE,
+  BOND_GAP,
 } from '../utils/geometry';
+import { autoAdjustElectrons } from '../data/atoms';
 import './Workspace.css';
 
-const SNAP_THRESHOLD = 70;    // px — card active-edge to polygon-edge
-const LP_SNAP_THRESHOLD = 45; // px — lone pair to non-bond card edge
-
-// Non-bond edge indices for outer atom cards (bond edge = 2/bottom)
-const NON_BOND_EDGES = [0, 1, 3];
+const SNAP_THRESHOLD = 70;
+const CLICK_MAX_DIST = 5; // px — below this, pointer-up treated as a click
 
 export default function Workspace({
   centralAtoms,
+  centralLinks,
   cards,
-  lonePairs,
+  selectedCardId,
+  activeOverlay,
   onUpdateCentralAtom,
+  onRotateCentralAtom,
+  onRemoveCentralAtom,
   onUpdateCard,
   onRemoveCard,
-  onUpdateLonePair,
-  onRemoveLonePair,
+  onSelectCard,
+  onShuffleCard,
+  onSelectCentral,
+  onTransferBond,
 }) {
   const containerRef = useRef(null);
-  const [size, setSize]             = useState({ w: 800, h: 600 });
-  const [cardDrag, setCardDrag]     = useState(null); // { cardId, offsetX, offsetY }
-  const [centralDrag, setCentralDrag] = useState(null); // { centralId, offsetX, offsetY }
-  const [lpDrag, setLpDrag]         = useState(null); // { lpId, offsetX, offsetY }
-  const [snapHover, setSnapHover]   = useState(null); // { centralId, edgeIndex }
+  const [size, setSize]           = useState({ w: 800, h: 600 });
+  const [cardDrag, setCardDrag]   = useState(null);
+  // centralDrag: { centralId, offsetX, offsetY, startX, startY }
+  const [centralDrag, setCentralDrag] = useState(null);
+  const [snapHover, setSnapHover] = useState(null);
+  const [bondDrag, setBondDrag] = useState(null);
+  // bondDrag: { centralId, fromEdge, ghostX, ghostY } | null
 
   useEffect(() => {
     const el = containerRef.current;
@@ -47,29 +51,42 @@ export default function Workspace({
     return () => ro.disconnect();
   }, []);
 
-  // ── Polygon edge data for all central atoms ────────────────────────────────
+  // ── Edge data ──────────────────────────────────────────────────────────────
 
   const allEdges = useMemo(() => {
     return centralAtoms.flatMap((ca) => {
       const polyN = ca.domains === 2 ? 4 : ca.domains;
       const R = getPolygonRadius(polyN);
-      const verts = getPolygonVertices(ca.position.x, ca.position.y, R, polyN);
-      return getEdgeMidpoints(ca.position.x, ca.position.y, verts).map((e) => ({
-        ...e,
-        centralId: ca.id,
-      }));
+      const verts = getPolygonVertices(ca.position.x, ca.position.y, R, polyN, ca.rotation || 0);
+      return getEdgeMidpoints(ca.position.x, ca.position.y, verts)
+        .filter((e) => ca.bondPattern[e.edgeIndex] != null)
+        .map((e) => ({ ...e, centralId: ca.id }));
     });
   }, [centralAtoms]);
 
   const occupiedEdgesFor = useCallback(
-    (centralId) =>
-      cards
+    (centralId) => {
+      const fromCards = cards
         .filter((c) => c.snappedEdge?.centralId === centralId)
-        .map((c) => c.snappedEdge.edgeIndex),
-    [cards]
+        .map((c) => c.snappedEdge.edgeIndex);
+      const fromLinks = (centralLinks ?? [])
+        .filter((l) => l.id1 === centralId || l.id2 === centralId)
+        .map((l) => (l.id1 === centralId ? l.edgeIndex1 : l.edgeIndex2));
+      return [...fromCards, ...fromLinks];
+    },
+    [cards, centralLinks]
   );
 
-  // ── Card snap helpers ──────────────────────────────────────────────────────
+  // Edge indices that are linked to another central atom (for grey bond-square rendering)
+  const caLinkedEdgesFor = useCallback(
+    (centralId) =>
+      (centralLinks ?? [])
+        .filter((l) => l.id1 === centralId || l.id2 === centralId)
+        .map((l) => (l.id1 === centralId ? l.edgeIndex1 : l.edgeIndex2)),
+    [centralLinks]
+  );
+
+  // ── Snap helpers ───────────────────────────────────────────────────────────
 
   const findSnapEdge = useCallback(
     (cardId, pos, rotation) => {
@@ -77,19 +94,27 @@ export default function Workspace({
       const ep = getCardActiveEdgeMidpoint(pos.x, pos.y, rotation);
       let best = null, bestD = SNAP_THRESHOLD;
       for (const edge of allEdges) {
-        const alreadyOccupied = cards.some(
+        // Skip edges already occupied by another outer atom card
+        const occupiedByCard = cards.some(
           (c) =>
             c.id !== cardId &&
             c.snappedEdge?.centralId === edge.centralId &&
             c.snappedEdge?.edgeIndex === edge.edgeIndex
         );
-        if (alreadyOccupied) continue;
+        if (occupiedByCard) continue;
+        // Skip edges occupied by a CA–CA link (those are not available for outer atoms)
+        const occupiedByLink = (centralLinks ?? []).some(
+          (l) =>
+            (l.id1 === edge.centralId && l.edgeIndex1 === edge.edgeIndex) ||
+            (l.id2 === edge.centralId && l.edgeIndex2 === edge.edgeIndex)
+        );
+        if (occupiedByLink) continue;
         const d = dist(ep.x, ep.y, edge.x, edge.y);
         if (d < bestD) { bestD = d; best = edge; }
       }
       return best;
     },
-    [allEdges, cards]
+    [allEdges, cards, centralLinks]
   );
 
   const snapPositionFromEdge = useCallback((edge) => ({
@@ -98,38 +123,10 @@ export default function Workspace({
     rotDeg: (edge.angle * 180) / Math.PI + 90,
   }), []);
 
-  // ── LP snap helpers ────────────────────────────────────────────────────────
-
-  const findLpSnapEdge = useCallback(
-    (lpId, lpPos) => {
-      let best = null, bestD = LP_SNAP_THRESHOLD;
-      for (const card of cards) {
-        for (const edgeIndex of NON_BOND_EDGES) {
-          // Skip if another LP is already here
-          const occupied = lonePairs.some(
-            (lp) =>
-              lp.id !== lpId &&
-              lp.snappedTo?.cardId === card.id &&
-              lp.snappedTo?.edgeIndex === edgeIndex
-          );
-          if (occupied) continue;
-
-          const edgeWorld = getCardEdgeWorld(card.position.x, card.position.y, card.rotation, edgeIndex);
-          const d = dist(lpPos.x, lpPos.y, edgeWorld.x, edgeWorld.y);
-          if (d < bestD) {
-            bestD = d;
-            best = { card, edgeIndex };
-          }
-        }
-      }
-      return best;
-    },
-    [cards, lonePairs]
-  );
-
   // ── Pointer handlers ───────────────────────────────────────────────────────
+  // Both handlers live on the workspace-container so they receive events that
+  // bubble from SVG children (central atoms) AND HTML children (cards).
 
-  // Central atom polygon drag
   const handleCentralPointerDown = useCallback(
     (e, centralId) => {
       e.preventDefault();
@@ -141,15 +138,14 @@ export default function Workspace({
         centralId,
         offsetX: e.clientX - rect.left - ca.position.x,
         offsetY: e.clientY - rect.top  - ca.position.y,
-        startX:  ca.position.x,
-        startY:  ca.position.y,
+        startX:  e.clientX,
+        startY:  e.clientY,
       });
       e.currentTarget.setPointerCapture(e.pointerId);
     },
     [centralAtoms]
   );
 
-  // Outer atom card drag
   const handleCardPointerDown = useCallback(
     (e, cardId) => {
       e.preventDefault();
@@ -168,26 +164,6 @@ export default function Workspace({
     [cards, onUpdateCard]
   );
 
-  // Lone pair drag
-  const handleLpPointerDown = useCallback(
-    (e, lpId) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const lp = lonePairs.find((l) => l.id === lpId);
-      if (!lp) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      setLpDrag({
-        lpId,
-        offsetX: e.clientX - rect.left - lp.position.x,
-        offsetY: e.clientY - rect.top  - lp.position.y,
-      });
-      if (lp.snappedTo) onUpdateLonePair(lpId, { snappedTo: null, rotation: 0 });
-      e.currentTarget.setPointerCapture(e.pointerId);
-    },
-    [lonePairs, onUpdateLonePair]
-  );
-
-  // Unified pointer move
   const handlePointerMove = useCallback(
     (e) => {
       const rect = containerRef.current.getBoundingClientRect();
@@ -195,9 +171,10 @@ export default function Workspace({
       const my = e.clientY - rect.top;
 
       if (centralDrag) {
-        const newPos = { x: mx - centralDrag.offsetX, y: my - centralDrag.offsetY };
-        // App.jsx computes drift and cascades updates to snapped cards + lone pairs
-        onUpdateCentralAtom(centralDrag.centralId, newPos);
+        onUpdateCentralAtom(centralDrag.centralId, {
+          x: mx - centralDrag.offsetX,
+          y: my - centralDrag.offsetY,
+        });
       }
 
       if (cardDrag) {
@@ -208,19 +185,22 @@ export default function Workspace({
         setSnapHover(snap ? { centralId: snap.centralId, edgeIndex: snap.edgeIndex } : null);
       }
 
-      if (lpDrag) {
-        const pos = { x: mx - lpDrag.offsetX, y: my - lpDrag.offsetY };
-        onUpdateLonePair(lpDrag.lpId, { position: pos, snappedTo: null });
+      if (bondDrag) {
+        setBondDrag((prev) => prev ? { ...prev, ghostX: mx, ghostY: my } : null);
       }
     },
-    [centralDrag, cardDrag, lpDrag, centralAtoms, cards, findSnapEdge,
-     onUpdateCentralAtom, onUpdateCard, onUpdateLonePair]
+    [centralDrag, cardDrag, bondDrag, cards, findSnapEdge, onUpdateCentralAtom, onUpdateCard]
   );
 
-  // Unified pointer up
   const handlePointerUp = useCallback(
     (e) => {
       if (centralDrag) {
+        // Treat as click if pointer barely moved
+        const dx = e.clientX - centralDrag.startX;
+        const dy = e.clientY - centralDrag.startY;
+        if (Math.sqrt(dx * dx + dy * dy) < CLICK_MAX_DIST) {
+          onSelectCentral?.(centralDrag.centralId);
+        }
         setCentralDrag(null);
       }
 
@@ -230,38 +210,45 @@ export default function Workspace({
           const snap = findSnapEdge(cardDrag.cardId, card.position, card.rotation);
           if (snap) {
             const { x, y, rotDeg } = snapPositionFromEdge(snap);
+            const ca = centralAtoms.find((a) => a.id === snap.centralId);
+            const bondOrder = ca?.bondPattern?.[snap.edgeIndex] ?? 1;
+            const adjustedElectrons = autoAdjustElectrons(card.electrons, bondOrder);
             onUpdateCard(cardDrag.cardId, {
               position: { x, y },
               rotation: rotDeg,
-              snappedEdge: { centralId: snap.centralId, edgeIndex: snap.edgeIndex },
+              snappedEdge: { centralId: snap.centralId, edgeIndex: snap.edgeIndex, bondOrder },
+              electrons: adjustedElectrons,
             });
           }
         }
         setCardDrag(null);
         setSnapHover(null);
       }
-
-      if (lpDrag) {
-        const lp = lonePairs.find((l) => l.id === lpDrag.lpId);
-        if (lp) {
-          const target = findLpSnapEdge(lpDrag.lpId, lp.position);
-          if (target) {
-            const { card, edgeIndex } = target;
-            const snapInfo = getLonePairSnapInfo(
-              card.position.x, card.position.y, card.rotation, edgeIndex
-            );
-            onUpdateLonePair(lpDrag.lpId, {
-              position:  { x: snapInfo.x, y: snapInfo.y },
-              rotation:  snapInfo.rotation,
-              snappedTo: { cardId: card.id, edgeIndex },
-            });
+      if (bondDrag) {
+        const { centralId, fromEdge } = bondDrag;
+        const rect = containerRef.current.getBoundingClientRect();
+        const mx2 = e.clientX - rect.left;
+        const my2 = e.clientY - rect.top;
+        const ca = centralAtoms.find((c) => c.id === centralId);
+        if (ca) {
+          const polyN = ca.domains === 2 ? 4 : ca.domains;
+          const R = getPolygonRadius(polyN);
+          const verts = getPolygonVertices(ca.position.x, ca.position.y, R, polyN, ca.rotation || 0);
+          const edges = getEdgeMidpoints(ca.position.x, ca.position.y, verts);
+          let best = null, bestD = 60;
+          for (const edge of edges) {
+            if (edge.edgeIndex === fromEdge) continue;
+            if (ca.bondPattern[edge.edgeIndex] == null) continue;
+            const d = dist(mx2, my2, edge.x, edge.y);
+            if (d < bestD) { bestD = d; best = edge.edgeIndex; }
           }
+          if (best !== null) onTransferBond?.(centralId, fromEdge, best);
         }
-        setLpDrag(null);
+        setBondDrag(null);
       }
     },
-    [centralDrag, cardDrag, lpDrag, cards, lonePairs,
-     findSnapEdge, snapPositionFromEdge, findLpSnapEdge, onUpdateCard, onUpdateLonePair]
+    [centralDrag, cardDrag, bondDrag, cards, centralAtoms, findSnapEdge, snapPositionFromEdge,
+     onUpdateCard, onSelectCentral, onTransferBond]
   );
 
   const handleRotate = useCallback(
@@ -276,8 +263,13 @@ export default function Workspace({
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="workspace-container" ref={containerRef}>
-      {/* SVG layer: dot grid + bond hint lines */}
+    <div
+      className="workspace-container"
+      ref={containerRef}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+    >
+      {/* SVG layer */}
       <svg
         width={size.w}
         height={size.h}
@@ -285,7 +277,6 @@ export default function Workspace({
       >
         <DotGrid width={size.w} height={size.h} />
 
-        {/* Faint lines from polygon center to snapped cards */}
         {centralAtoms.map((ca) =>
           cards
             .filter((c) => c.snappedEdge?.centralId === ca.id)
@@ -300,21 +291,78 @@ export default function Workspace({
             ))
         )}
 
-        {/* Central atom polygons (SVG, pointer-events delegated to polygon element) */}
+        {(centralLinks ?? []).map((link) => {
+          const ca1 = centralAtoms.find((c) => c.id === link.id1);
+          const ca2 = centralAtoms.find((c) => c.id === link.id2);
+          if (!ca1 || !ca2) return null;
+          const polyN1 = ca1.domains === 2 ? 4 : ca1.domains;
+          const R1 = getPolygonRadius(polyN1);
+          const verts1 = getPolygonVertices(ca1.position.x, ca1.position.y, R1, polyN1, ca1.rotation || 0);
+          const edges1 = getEdgeMidpoints(ca1.position.x, ca1.position.y, verts1);
+          const e1 = edges1.find((e) => e.edgeIndex === link.edgeIndex1);
+
+          const polyN2 = ca2.domains === 2 ? 4 : ca2.domains;
+          const R2 = getPolygonRadius(polyN2);
+          const verts2 = getPolygonVertices(ca2.position.x, ca2.position.y, R2, polyN2, ca2.rotation || 0);
+          const edges2 = getEdgeMidpoints(ca2.position.x, ca2.position.y, verts2);
+          const e2 = edges2.find((e) => e.edgeIndex === link.edgeIndex2);
+
+          if (!e1 || !e2) return null;
+          const bondOrder = link.bondOrder ?? 1;
+          const dx = e2.x - e1.x;
+          const dy = e2.y - e1.y;
+          const len = Math.sqrt(dx * dx + dy * dy) || 1;
+          const nx = -dy / len;
+          const ny =  dx / len;
+          const offsets = bondOrder === 1 ? [0]
+            : bondOrder === 2 ? [-3, 3]
+            : [-4, 0, 4];
+
+          return offsets.map((off, i) => (
+            <line
+              key={`${link.id1}-${link.id2}-${i}`}
+              x1={e1.x + nx * off} y1={e1.y + ny * off}
+              x2={e2.x + nx * off} y2={e2.y + ny * off}
+              stroke="rgba(255,255,255,0.75)"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          ));
+        })}
+
         {centralAtoms.map((ca) => (
           <PolygonAtom
             key={ca.id}
+            atomId={ca.id}
             cx={ca.position.x}
             cy={ca.position.y}
             n={ca.domains}
             element={ca.element}
             color={ca.color}
             bondPattern={ca.bondPattern}
+            rotation={ca.rotation || 0}
+            formalCharge={ca.formalCharge ?? 0}
+            baseValence={ca.baseValence ?? 4}
+            activeOverlay={activeOverlay}
             occupiedEdges={occupiedEdgesFor(ca.id)}
+            caLinkedEdges={caLinkedEdgesFor(ca.id)}
             snapHoverEdge={
               snapHover?.centralId === ca.id ? snapHover.edgeIndex : null
             }
             onPointerDown={(e) => handleCentralPointerDown(e, ca.id)}
+            onSelect={() => onSelectCentral?.(ca.id)}
+            onBondSquareDragStart={(edgeIndex, e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              e.currentTarget.setPointerCapture(e.pointerId);
+              const rect = containerRef.current.getBoundingClientRect();
+              setBondDrag({
+                centralId: ca.id,
+                fromEdge: edgeIndex,
+                ghostX: e.clientX - rect.left,
+                ghostY: e.clientY - rect.top,
+              });
+            }}
           />
         ))}
 
@@ -327,38 +375,112 @@ export default function Workspace({
             ← Select a central atom to begin
           </text>
         )}
+
+        {bondDrag?.ghostX != null && (
+          <rect
+            x={bondDrag.ghostX - BOND_SQUARE_SIZE / 2}
+            y={bondDrag.ghostY - BOND_SQUARE_SIZE / 2}
+            width={BOND_SQUARE_SIZE}
+            height={BOND_SQUARE_SIZE}
+            fill="rgba(255,255,255,0.65)"
+            rx="2"
+            style={{ pointerEvents: 'none' }}
+          />
+        )}
       </svg>
 
-      {/* Interactive card + LP layer */}
-      <div
-        style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-      >
+      {/* Central atom hover controls */}
+      {centralAtoms.map((ca) => {
+        const polyN = ca.domains === 2 ? 4 : ca.domains;
+        const R = getPolygonRadius(polyN);
+        return (
+          <div
+            key={ca.id}
+            className="ca-overlay"
+            style={{
+              left: ca.position.x - R, top: ca.position.y - R,
+              width: R * 2, height: R * 2,
+            }}
+          >
+            <div className="ca-controls" style={{ top: -34, left: '50%' }}>
+              <button
+                className="ca-rotate-btn"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); onRotateCentralAtom(ca.id, -90); }}
+                title="Rotate CCW"
+              >↺</button>
+              <button
+                className="ca-rotate-btn"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); onRotateCentralAtom(ca.id, 90); }}
+                title="Rotate CW"
+              >↻</button>
+              <button
+                className="ca-remove-btn"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); onRemoveCentralAtom(ca.id); }}
+                title="Remove atom"
+              >×</button>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Card layer — pointer-events: none on the div itself so it doesn't
+          block clicks on the SVG polygon below; cards inside still get events */}
+      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
         {cards.map((card) => (
           <AtomCard
             key={card.id}
             card={card}
             isDragging={cardDrag?.cardId === card.id}
             isSnapping={card.snappedEdge !== null}
+            isSelected={selectedCardId === card.id}
+            activeOverlay={activeOverlay}
             onPointerDown={(e) => handleCardPointerDown(e, card.id)}
             onRotateCW={()  => handleRotate(card.id,  90)}
             onRotateCCW={() => handleRotate(card.id, -90)}
             onRemove={() => onRemoveCard(card.id)}
-          />
-        ))}
-
-        {lonePairs.map((lp) => (
-          <LonePair
-            key={lp.id}
-            lp={lp}
-            isDragging={lpDrag?.lpId === lp.id}
-            isSnapping={!!lp.snappedTo}
-            onPointerDown={(e) => handleLpPointerDown(e, lp.id)}
-            onRemove={() => onRemoveLonePair(lp.id)}
+            onSelect={() => onSelectCard(card.id)}
+            onShuffle={() => onShuffleCard?.(card.id)}
           />
         ))}
       </div>
+
+      {/* Bond bridge layer — above card glow effects */}
+      <svg
+        width={size.w}
+        height={size.h}
+        style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 150 }}
+      >
+        {cards.filter((c) => c.snappedEdge).flatMap((card) => {
+          const edge = allEdges.find(
+            (e) => e.centralId === card.snappedEdge.centralId && e.edgeIndex === card.snappedEdge.edgeIndex
+          );
+          if (!edge) return [];
+          const bo = card.snappedEdge.bondOrder ?? 1;
+          const rectW = BOND_SQUARE_SIZE;
+          const rectH = BOND_SQUARE_SIZE * 2;
+          const total = bo * rectW + (bo - 1) * BOND_GAP;
+          const angleDeg = (edge.angle * 180) / Math.PI;
+          return Array.from({ length: bo }, (_, i) => {
+            const offset = -total / 2 + rectW / 2 + i * (rectW + BOND_GAP);
+            return (
+              <rect
+                key={`bridge-${card.id}-${i}`}
+                x={edge.x - rectW / 2 + offset}
+                y={edge.y - rectH / 2}
+                width={rectW}
+                height={rectH}
+                fill="#3a4554"
+                rx="2"
+                style={{ pointerEvents: 'none' }}
+                transform={`rotate(${angleDeg - 90}, ${edge.x}, ${edge.y})`}
+              />
+            );
+          });
+        })}
+      </svg>
     </div>
   );
 }

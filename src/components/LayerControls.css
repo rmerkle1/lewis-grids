@@ -1,0 +1,130 @@
+.layer-controls {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(13, 13, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 8px 12px;
+  z-index: 300;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.layer-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.layer-controls-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.28);
+  margin-right: 4px;
+}
+
+.layer-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 11px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.layer-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.layer-btn.active {
+  background: rgba(100, 180, 255, 0.2);
+  border-color: rgba(100, 180, 255, 0.45);
+  color: #aaddff;
+}
+
+.layer-btn--3d.active {
+  background: rgba(100, 180, 255, 0.28);
+  border-color: rgba(100, 180, 255, 0.6);
+  color: #b8e0ff;
+}
+
+.layer-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: auto; /* keep cursor visible */
+}
+
+.layer-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.12);
+  margin: 0 2px;
+}
+
+/* ── EN Color Scale Legend ── */
+
+.en-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 2px;
+  width: 340px;
+}
+
+.en-bar {
+  height: 10px;
+  border-radius: 5px;
+  /* Low EN (δ+) → blue on left; High EN (δ-) → yellow on right — matches 3D ESP viewer */
+  background: linear-gradient(to right,
+    rgb(20, 130, 255),
+    rgb(135, 30, 210),
+    rgb(255, 50, 130),
+    rgb(255, 215, 0)
+  );
+}
+
+.en-ticks {
+  position: relative;
+  height: 28px;
+}
+
+.en-tick {
+  position: absolute;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.en-tick-line {
+  width: 1px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.en-tick-label {
+  font-size: 9px;
+  font-weight: 700;
+  font-family: 'Georgia', serif;
+  white-space: nowrap;
+}
+
+.en-range {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.28);
+  margin-top: 1px;
+}

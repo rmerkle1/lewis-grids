@@ -1,0 +1,139 @@
+.viewer3d {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 6px 32px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  z-index: 500;
+  user-select: none;
+}
+
+.viewer3d-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f0f0f0;
+  border-bottom: 1px solid #ddd;
+}
+
+.viewer3d-title {
+  font-weight: bold;
+  font-family: Georgia, serif;
+  font-size: 14px;
+  color: #222;
+}
+
+.viewer3d-hint {
+  font-size: 11px;
+  color: #999;
+  flex: 1;
+}
+
+.viewer3d-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: #888;
+  padding: 0 2px;
+}
+.viewer3d-close:hover { color: #111; }
+
+/* ── Canvas wrapper + polarity toggle overlay ── */
+
+.viewer3d-canvas-wrap {
+  position: relative;
+}
+
+.polarity-toggle {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 20px;
+  padding: 4px 10px 4px 12px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
+  user-select: none;
+}
+
+.polarity-toggle-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #555;
+  letter-spacing: 0.04em;
+}
+
+.polarity-switch {
+  width: 30px;
+  height: 17px;
+  border-radius: 9px;
+  background: #ccc;
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.polarity-switch.on {
+  background: #871ed2;
+}
+
+.polarity-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: left 0.2s;
+}
+
+.polarity-switch.on .polarity-knob {
+  left: 15px;
+}
+
+/* ── Polarity legend (shown inline inside canvas area when on) ── */
+.polarity-legend {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 20px;
+  padding: 3px 10px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
+  width: 180px;
+  pointer-events: none;
+}
+
+.legend-neg { font-size: 10px; font-weight: 700; color: #cc7000; white-space: nowrap; }
+.legend-pos { font-size: 10px; font-weight: 700; color: #7020c0; white-space: nowrap; }
+
+.legend-bar {
+  flex: 1;
+  height: 7px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #ffd700, #ff3282, #871ed2, #1482ff);
+}
+
+.viewer3d-canvas {
+  display: block;
+  cursor: grab;
+  touch-action: none;
+}
+.viewer3d-canvas:active { cursor: grabbing; }

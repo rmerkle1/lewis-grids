@@ -1,0 +1,50 @@
+.viewer2d {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 6px 32px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  z-index: 499;
+  user-select: none;
+}
+
+.viewer2d-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f0f0f0;
+  border-bottom: 1px solid #ddd;
+}
+
+.viewer2d-title {
+  font-weight: bold;
+  font-family: Georgia, serif;
+  font-size: 14px;
+  color: #222;
+}
+
+.viewer2d-hint {
+  font-size: 11px;
+  color: #999;
+  flex: 1;
+}
+
+.viewer2d-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: #888;
+  padding: 0 2px;
+}
+
+.viewer2d-close:hover { color: #111; }
+
+.viewer2d-svg {
+  display: block;
+  background: white;
+}

@@ -7,48 +7,103 @@
   cursor: grab;
   user-select: none;
   touch-action: none;
-  box-sizing: border-box;
-  border: 2px solid rgba(255, 255, 255, 0.22);
-  /* No overflow: visible — squares are inside now */
-  transition: box-shadow 0.12s ease;
+  pointer-events: auto; /* override parent card layer's pointer-events: none */
 }
 
-.atom-card:hover {
-  box-shadow: 0 0 0 2px rgba(100, 180, 255, 0.5), 0 4px 16px rgba(0,0,0,0.4);
-  z-index: 10;
+.atom-card:hover  { z-index: 10; }
+.atom-card.dragging { cursor: grabbing; z-index: 100; }
+.atom-card.snapped  { cursor: default; }
+
+/* Selected: subtle purple halo (UI only, not a shape outline) */
+.atom-card.selected {
+  box-shadow: 0 0 0 3px rgba(160, 100, 255, 0.55);
+  z-index: 20;
 }
 
-.atom-card.dragging {
-  cursor: grabbing;
-  z-index: 100;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 2px rgba(100,180,255,0.7);
+/* Negative formal charge: outward glow in the atom's own color */
+.atom-card.charge-neg {
+  filter: drop-shadow(0 0 6px var(--atom-color)) drop-shadow(0 0 14px var(--atom-color));
 }
 
-.atom-card.snapped {
-  cursor: default;
-  box-shadow: 0 0 0 2px rgba(68, 255, 136, 0.45), 0 2px 8px rgba(0,0,0,0.3);
+/* Positive formal charge: inward vignette — edges darken toward center (anti-glow) */
+.atom-card.charge-pos::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background: radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.52) 100%);
+  pointer-events: none;
+  z-index: 1;
 }
 
+/* ── Element label ── */
 .atom-label {
   font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 20px;
   font-weight: bold;
+  color: #fff;
   pointer-events: none;
   z-index: 2;
   position: relative;
 }
 
-/* Bond squares — inside the card, against the active edge */
-.bond-square {
+
+/* ── Electron squares — flat, no border ── */
+.electron-sq {
   position: absolute;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(0, 0, 0, 0.3);
   border-radius: 2px;
-  z-index: 5;
   pointer-events: none;
+  z-index: 5;
+  background: rgba(255, 255, 255, 0.88);
+  /* No border — flat */
 }
 
-/* Controls */
+/* Amber glow: unpaired electrons that still need to bond */
+.electron-sq.reactive {
+  background: #fdb714;
+  box-shadow: 0 0 7px rgba(253, 183, 20, 0.8), 0 0 3px rgba(253, 183, 20, 0.6);
+  animation: pulse-reactive 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse-reactive {
+  0%, 100% { box-shadow: 0 0 7px rgba(253, 183, 20, 0.8); }
+  50%       { box-shadow: 0 0 14px rgba(253, 183, 20, 1.0), 0 0 5px rgba(255, 210, 60, 0.9); }
+}
+
+/* Grey: bond-edge electrons when snapped (bonded) */
+.electron-sq.bonded {
+  background: #4f5b6f;
+  box-shadow: none;
+}
+
+/* ── Overlay states ── */
+
+.atom-label.label-blurred {
+  filter: blur(4px);
+  opacity: 0.4;
+}
+
+.overlay-value {
+  position: absolute;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-weight: 800;
+  font-size: 22px;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 3;
+  letter-spacing: -0.02em;
+}
+
+/* Formal charge colors */
+.fc-pos  { color: rgba(255,255,255,0.75); }
+.fc-neg  { color: rgba(255,255,255,0.75); }
+.fc-zero { color: rgba(255,255,255,0.75); }
+
+/* Octet check colors */
+.octet-ok   { color: #66ee88; text-shadow: 0 0 8px rgba(80,220,100,0.6); }
+.octet-fail { color: #ff5555; text-shadow: 0 0 8px rgba(255,60,60,0.6); }
+
+/* ── Card controls (hover toolbar) ── */
 .card-controls {
   position: absolute;
   top: -30px;
@@ -56,7 +111,7 @@
   transform: translateX(-50%);
   display: none;
   gap: 2px;
-  background: rgba(12, 12, 26, 0.94);
+  background: rgba(12, 12, 26, 0.92);
   border-radius: 6px;
   padding: 3px 5px;
   white-space: nowrap;
@@ -64,13 +119,14 @@
 }
 
 .atom-card:hover .card-controls,
-.atom-card.dragging .card-controls {
+.atom-card.dragging .card-controls,
+.atom-card.selected .card-controls {
   display: flex;
 }
 
-.rotate-btn, .remove-btn {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.18);
+.ctrl-btn {
+  background: rgba(255,255,255,0.1);
+  border: none;
   color: #ccc;
   font-size: 14px;
   width: 22px;
@@ -83,6 +139,5 @@
   padding: 0;
   transition: background 0.1s;
 }
-
-.rotate-btn:hover { background: rgba(100,180,255,0.3); color: #fff; }
-.remove-btn:hover  { background: rgba(255,80,80,0.4);  color: #fff; }
+.ctrl-btn:hover           { background: rgba(100,180,255,0.3); color: #fff; }
+.ctrl-btn--remove:hover   { background: rgba(255,80,80,0.4);   color: #fff; }

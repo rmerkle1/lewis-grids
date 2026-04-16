@@ -36,10 +36,8 @@ export default function ConfigPreview({ domains, bondPattern, color }) {
     >
       <polygon
         points={pointsStr}
-        fill={color || '#555'}
-        stroke="rgba(255,255,255,0.5)"
-        strokeWidth="2"
-        opacity="0.88"
+        fill={color || '#4f5b6f'}
+        stroke="none"
       />
 
       {edgeMidpoints.map((edge) => {
@@ -54,8 +52,7 @@ export default function ConfigPreview({ domains, bondPattern, color }) {
             width={BOND_SQUARE_SIZE}
             height={BOND_SQUARE_SIZE}
             fill="rgba(255,255,255,0.88)"
-            stroke="rgba(0,0,0,0.2)"
-            strokeWidth="0.8"
+            stroke="none"
             rx="2"
             transform={`rotate(${pos.angleDeg}, ${pos.cx}, ${pos.cy})`}
           />

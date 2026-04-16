@@ -1,63 +1,134 @@
-import { getCardBondSquarePositions, BOND_SQUARE_SIZE, CARD_SIZE } from '../utils/geometry';
+import { getEdgeElectronPositions, BOND_SQUARE_SIZE, CARD_SIZE } from '../utils/geometry';
+import { getReactiveEdges, getFormalCharge } from '../data/atoms';
+import { enToColor, outerOctetCount } from '../utils/overlays';
 import './AtomCard.css';
 
 export default function AtomCard({
   card,
   isDragging,
   isSnapping,
+  isSelected,
+  activeOverlay,
   onPointerDown,
   onRotateCW,
   onRotateCCW,
   onRemove,
+  onSelect,
+  onShuffle,
 }) {
-  const { position, rotation, label, color, bondOrder } = card;
+  const { position, rotation, label, element, color, electrons, baseValence, arrangements } = card;
 
   const left = position.x - CARD_SIZE / 2;
   const top  = position.y - CARD_SIZE / 2;
 
-  // Bond squares on the bottom edge (edge 2), fully inside the card
-  const bondSquares = getCardBondSquarePositions(2, bondOrder);
+  const bondOrder     = card.snappedEdge?.bondOrder ?? 0;
+  const reactiveEdges = getReactiveEdges(electrons, baseValence, isSnapping, bondOrder);
+  const formalCharge  = getFormalCharge(electrons, baseValence);
+  const canShuffle    = !isSnapping && arrangements && arrangements.length > 1;
+
+  // Octet: count lone-pair electrons + 2×bondOrder (both bond electrons credited to this atom).
+  // Check strictly === 8. H (duet target=2) can never reach 8 → always ✗.
+  const octetCount     = outerOctetCount(electrons, isSnapping, bondOrder);
+  const octetSatisfied = octetCount === 8;
+
+  const showBlurredLabel = activeOverlay === 'fc' || activeOverlay === 'octet';
+  const cardBg = activeOverlay === 'en' ? enToColor(element || label) : (color || '#4f5b6f');
 
   return (
     <div
-      className={`atom-card ${isDragging ? 'dragging' : ''} ${isSnapping ? 'snapped' : ''}`}
+      className={[
+        'atom-card',
+        isDragging ? 'dragging'  : '',
+        isSnapping  ? 'snapped'  : '',
+        isSelected  ? 'selected' : '',
+        formalCharge > 0 ? 'charge-pos' : formalCharge < 0 ? 'charge-neg' : '',
+      ].filter(Boolean).join(' ')}
       style={{
         left,
         top,
-        width: CARD_SIZE,
-        height: CARD_SIZE,
+        width:     CARD_SIZE,
+        height:    CARD_SIZE,
         transform: `rotate(${rotation}deg)`,
-        background: color || '#333',
-        color: isLightColor(color) ? '#111' : '#fff',
+        background: cardBg,
+        '--atom-color': color || '#4f5b6f',
       }}
       onPointerDown={onPointerDown}
+      onClick={(e) => { e.stopPropagation(); onSelect?.(); }}
     >
-      <span className="atom-label">{label}</span>
+      {/* Element label — blurred when an overlay is active */}
+      <span
+        className={`atom-label${showBlurredLabel ? ' label-blurred' : ''}`}
+        style={{ transform: `rotate(${-rotation}deg)` }}
+      >
+        {label}
+      </span>
 
-      {/* Bond squares — inside, touching the bottom edge */}
-      {bondSquares.map((pos, i) => (
-        <div
-          key={i}
-          className="bond-square"
-          style={{ left: pos.x, top: pos.y, width: BOND_SQUARE_SIZE, height: BOND_SQUARE_SIZE }}
-        />
-      ))}
+      {/* Formal charge overlay */}
+      {activeOverlay === 'fc' && (
+        <span
+          className={`overlay-value fc-value ${formalCharge > 0 ? 'fc-pos' : formalCharge < 0 ? 'fc-neg' : 'fc-zero'}`}
+          style={{ transform: `rotate(${-rotation}deg)` }}
+        >
+          {formalCharge === 0 ? '0' : formalCharge > 0 ? `+${formalCharge}` : `${formalCharge}`}
+        </span>
+      )}
 
-      {/* Controls (shown on hover when not snapped) */}
+      {/* Octet rule overlay */}
+      {activeOverlay === 'octet' && (
+        <span
+          className={`overlay-value octet-value ${octetSatisfied ? 'octet-ok' : 'octet-fail'}`}
+          style={{ transform: `rotate(${-rotation}deg)` }}
+        >
+          {octetSatisfied ? '✓' : '✗'}
+        </span>
+      )}
+
+      {/* Electron squares — all 4 edges */}
+      {electrons.map((count, edgeIndex) => {
+        if (count === 0) return null;
+        if (edgeIndex === 2 && isSnapping) return null;
+        const positions = getEdgeElectronPositions(edgeIndex, count);
+        const edgeClass =
+          edgeIndex === 2 && isSnapping   ? 'bonded' :
+          reactiveEdges.has(edgeIndex)    ? 'reactive' :
+          '';
+        return positions.map((pos, i) => (
+          <div
+            key={`e-${edgeIndex}-${i}`}
+            className={`electron-sq ${edgeClass}`}
+            style={{
+              left:   pos.x,
+              top:    pos.y,
+              width:  BOND_SQUARE_SIZE,
+              height: BOND_SQUARE_SIZE,
+            }}
+          />
+        ));
+      })}
+
+      {/* Controls — shown on hover when not snapped */}
       {!isSnapping && (
         <div className="card-controls">
+          {canShuffle && (
+            <button
+              className="ctrl-btn"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); onShuffle?.(); }}
+              title="Shuffle electron arrangement"
+            >⇄</button>
+          )}
           <button
-            className="rotate-btn"
+            className="ctrl-btn"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onRotateCCW(); }}
           >↺</button>
           <button
-            className="rotate-btn"
+            className="ctrl-btn"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onRotateCW(); }}
           >↻</button>
           <button
-            className="remove-btn"
+            className="ctrl-btn ctrl-btn--remove"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onRemove(); }}
           >×</button>
@@ -65,14 +136,4 @@ export default function AtomCard({
       )}
     </div>
   );
-}
-
-function isLightColor(hex) {
-  if (!hex) return false;
-  const c = hex.replace('#', '');
-  if (c.length < 6) return false;
-  const r = parseInt(c.slice(0, 2), 16);
-  const g = parseInt(c.slice(2, 4), 16);
-  const b = parseInt(c.slice(4, 6), 16);
-  return (r * 299 + g * 587 + b * 114) / 1000 > 145;
 }

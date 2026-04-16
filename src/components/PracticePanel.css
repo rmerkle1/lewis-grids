@@ -1,0 +1,366 @@
+/* ── Panel shell ─────────────────────────────────────────────────────────── */
+
+.practice-panel {
+  width: 36px;
+  min-width: 36px;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-shrink: 0;
+  background: #13132a;
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+  transition: width 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.practice-panel.expanded {
+  width: 300px;
+}
+
+/* ── Vertical tab (always visible) ──────────────────────────────────────── */
+
+.practice-tab {
+  width: 36px;
+  min-width: 36px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.32);
+  transition: color 0.12s, background 0.12s;
+}
+
+.practice-tab:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.practice-panel.expanded .practice-tab {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.practice-tab-text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.practice-tab-chevron {
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* ── Scrollable body ─────────────────────────────────────────────────────── */
+
+.practice-body {
+  flex: 1;
+  min-width: 0;
+  padding: 16px 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Header ── */
+
+.practice-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.practice-heading {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.practice-shuffle-btn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 15px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.1s, background 0.1s, border-color 0.1s;
+}
+.practice-shuffle-btn:hover {
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Target molecule card ── */
+
+.practice-target {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
+  padding: 16px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+}
+
+.practice-formula {
+  font-family: Georgia, serif;
+  font-size: 36px;
+  font-weight: bold;
+  color: #e8e8f0;
+  line-height: 1;
+}
+
+.practice-mol-name {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.38);
+  margin-top: 2px;
+}
+
+/* ── Difficulty filter ── */
+
+.practice-diff-row {
+  display: flex;
+  gap: 4px;
+}
+
+.practice-diff-btn {
+  flex: 1;
+  padding: 5px 0;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.practice-diff-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+}
+/* All — blue (generic) */
+.practice-diff-btn.diff-all.active {
+  background: rgba(100, 170, 255, 0.14);
+  border-color: rgba(100, 170, 255, 0.35);
+  color: #aadeff;
+}
+/* Easy — green (#85c441) */
+.practice-diff-btn.diff-easy.active {
+  background: rgba(133, 196, 65, 0.14);
+  border-color: rgba(133, 196, 65, 0.4);
+  color: #a8d96a;
+}
+/* Medium — yellow */
+.practice-diff-btn.diff-medium.active {
+  background: rgba(240, 170, 40, 0.14);
+  border-color: rgba(240, 170, 40, 0.4);
+  color: #f5c84a;
+}
+/* Hard — pink (#e9177a) */
+.practice-diff-btn.diff-hard.active {
+  background: rgba(233, 23, 122, 0.14);
+  border-color: rgba(233, 23, 122, 0.4);
+  color: #f06aac;
+}
+
+/* ── Test-option checkboxes ── */
+
+.practice-options {
+  display: flex;
+  gap: 14px;
+}
+
+.practice-option-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  user-select: none;
+}
+
+.practice-option-label input[type="checkbox"] {
+  accent-color: #aadeff;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+/* ── Instructions ── */
+
+.practice-instructions {
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.38);
+}
+.practice-instructions strong {
+  color: rgba(255, 255, 255, 0.65);
+  font-weight: 600;
+}
+
+/* ── Polarity question ── */
+
+.practice-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.practice-q {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.practice-choices {
+  display: flex;
+  gap: 6px;
+}
+
+.practice-choice {
+  flex: 1;
+  padding: 5px 0;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.practice-choice:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+}
+.practice-choice.chosen {
+  background: rgba(100, 170, 255, 0.14);
+  border-color: rgba(100, 170, 255, 0.38);
+  color: #aadeff;
+}
+
+/* ── Submit button ── */
+
+.practice-submit {
+  width: 100%;
+  padding: 11px;
+  border-radius: 8px;
+  border: 1px solid rgba(100, 170, 255, 0.28);
+  background: rgba(100, 170, 255, 0.12);
+  color: #aadeff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: background 0.12s;
+}
+.practice-submit:hover {
+  background: rgba(100, 170, 255, 0.24);
+}
+
+/* ── Result / feedback ── */
+
+.practice-result {
+  border-radius: 9px;
+  padding: 13px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.practice-result.ok {
+  background: rgba(60, 200, 100, 0.09);
+  border: 1px solid rgba(60, 200, 100, 0.26);
+}
+.practice-result.err {
+  background: rgba(255, 80, 55, 0.07);
+  border: 1px solid rgba(255, 80, 55, 0.2);
+}
+
+.result-icon {
+  font-size: 20px;
+  color: #66ee88;
+  line-height: 1;
+}
+
+.result-title {
+  font-size: 13px;
+  font-weight: 700;
+}
+.practice-result.ok .result-title { color: #66ee88; }
+.practice-result.err .result-title { color: #ff8870; }
+
+.result-body {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.58);
+  line-height: 1.6;
+  margin-top: 2px;
+}
+.result-body em {
+  color: rgba(200, 200, 255, 0.85);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.result-hints {
+  padding-left: 15px;
+  margin: 2px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.result-hints li {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.58);
+  line-height: 1.55;
+}
+
+/* ── Progress dots ── */
+
+.practice-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.practice-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.12s, transform 0.12s;
+}
+.practice-dot:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+.practice-dot.active {
+  background: #aadeff;
+  transform: scale(1.25);
+}

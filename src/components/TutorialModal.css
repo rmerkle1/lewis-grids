@@ -1,0 +1,254 @@
+/* ── Overlay ──────────────────────────────────────────────────────────────── */
+
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 6, 18, 0.78);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+/* ── Modal window ─────────────────────────────────────────────────────────── */
+
+.tutorial-modal {
+  background: #13132a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(100, 160, 255, 0.08);
+  width: 100%;
+  max-width: 560px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+
+.tutorial-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.tutorial-logo {
+  font-size: 36px;
+  color: #66aaff;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.tutorial-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #e4e4f8;
+  letter-spacing: 0.01em;
+  margin-bottom: 3px;
+}
+
+.tutorial-subtitle {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+/* ── Steps ────────────────────────────────────────────────────────────────── */
+
+.tutorial-steps {
+  padding: 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tutorial-step {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.tutorial-step-badge {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3a7aff, #8844ee);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+  box-shadow: 0 2px 8px rgba(80, 120, 255, 0.35);
+}
+
+.tutorial-step-content {
+  flex: 1;
+}
+
+.tutorial-step-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #d8d8f0;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tutorial-step-icon {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.tutorial-step-body {
+  font-size: 13px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.tutorial-step-body strong {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+}
+
+.tutorial-step-body em {
+  color: #aaccff;
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* ── Layer list ────────────────────────────────────────────────────────────── */
+
+.tutorial-layer-list {
+  margin: 8px 0 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.tutorial-layer-list li {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+/* ── Inline pill labels ───────────────────────────────────────────────────── */
+
+.tutorial-pill {
+  display: inline-block;
+  background: rgba(100, 180, 255, 0.14);
+  border: 1px solid rgba(100, 180, 255, 0.3);
+  color: #aaddff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border-radius: 4px;
+  padding: 1px 7px;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.tutorial-pill--dim {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 11px;
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+
+.tutorial-footer {
+  padding: 20px 28px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.tutorial-btn {
+  background: linear-gradient(135deg, #3a7aff, #7a44ee);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 11px 32px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: opacity 0.15s, transform 0.1s;
+  box-shadow: 0 4px 16px rgba(60, 100, 255, 0.4);
+}
+
+.tutorial-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.tutorial-btn:active {
+  transform: translateY(0);
+}
+
+.tutorial-footer-hint {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.22);
+}
+
+/* ── Step illustrations ────────────────────────────────────────────────────── */
+
+.tutorial-step-illus {
+  margin-top: 10px;
+}
+
+.tutorial-illus-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tutorial-illus-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.tutorial-illus-frame {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 7px;
+  overflow: hidden;
+  line-height: 0; /* collapse whitespace around SVG */
+}
+
+.tutorial-illus-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  white-space: nowrap;
+}
+
+.tutorial-illus-sep {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.25);
+  font-weight: 300;
+  flex-shrink: 0;
+  /* push down to align with SVG centers, not bottom labels */
+  margin-bottom: 18px;
+}
