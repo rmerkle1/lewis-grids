@@ -111,7 +111,9 @@ export default function PracticePanel({ centralAtoms, cards, expanded, onToggle 
   const [diffFilter, setDiffFilter]     = useState('all');
 
   // Per-question state — reset on molecule change
-  const [moleculeId, setMoleculeId]     = useState(MOLECULES[0].id);
+  const [moleculeId, setMoleculeId]     = useState(
+    () => MOLECULES[Math.floor(Math.random() * MOLECULES.length)].id
+  );
   const [polarAnswer, setPolar]         = useState(null);
   const [result, setResult]             = useState(null);
   const [submitted, setSubmitted]       = useState(false);
@@ -124,7 +126,6 @@ export default function PracticePanel({ centralAtoms, cards, expanded, onToggle 
 
   // Resolve current molecule (fall back to first if filter knocked it out)
   const molecule = filtered.find((m) => m.id === moleculeId) ?? filtered[0];
-  const filteredIdx = filtered.indexOf(molecule);
 
   const switchTo = useCallback((id) => {
     setMoleculeId(id);
@@ -133,16 +134,20 @@ export default function PracticePanel({ centralAtoms, cards, expanded, onToggle 
     setSubmitted(false);
   }, []);
 
+  const pickRandom = useCallback((pool, excludeId) => {
+    const candidates = excludeId ? pool.filter((m) => m.id !== excludeId) : pool;
+    return candidates.length
+      ? candidates[Math.floor(Math.random() * candidates.length)]
+      : pool[0];
+  }, []);
+
   const handleNext = useCallback(() => {
-    const next = filtered[(filteredIdx + 1) % filtered.length];
-    switchTo(next.id);
-  }, [filtered, filteredIdx, switchTo]);
+    switchTo(pickRandom(filtered, molecule.id).id);
+  }, [filtered, molecule, switchTo, pickRandom]);
 
   const handleRandom = useCallback(() => {
-    const pool = filtered.filter((m) => m.id !== molecule.id);
-    const pick = pool.length ? pool[Math.floor(Math.random() * pool.length)] : molecule;
-    switchTo(pick.id);
-  }, [filtered, molecule, switchTo]);
+    switchTo(pickRandom(filtered, molecule.id).id);
+  }, [filtered, molecule, switchTo, pickRandom]);
 
   const handleSubmit = useCallback(() => {
     setResult(checkAnswer(centralAtoms, cards, molecule, polarAnswer, testOptions));
@@ -156,10 +161,13 @@ export default function PracticePanel({ centralAtoms, cards, expanded, onToggle 
   };
 
   const handleDiffFilter = (d) => {
+    const newFiltered = d === 'all' ? MOLECULES : MOLECULES.filter((m) => m.difficulty === d);
+    const pick = pickRandom(newFiltered, null);
     setDiffFilter(d);
+    setPolar(null);
     setResult(null);
     setSubmitted(false);
-    // If current molecule not in new filtered set, auto-advance
+    if (pick) setMoleculeId(pick.id);
   };
 
   const neitherChecked = !testOptions.lewis && !testOptions.polarity;
